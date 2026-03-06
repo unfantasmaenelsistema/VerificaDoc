@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNI Seguro — Marca de Agua</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: #2e2e38;
+    --text: #f0eee8;
+    --muted: #7a7880;
+    --accent: #e8c547;
+    --accent2: #4a9eff;
+    --danger: #ff5f5f;
+    --green: #4ade80;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+  .wrap { position: relative; z-index: 1; max-width: 1040px; margin: 0 auto; padding: 0 24px 60px; }
+
+  header {
+    padding: 32px 0 36px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); margin-bottom: 40px; flex-wrap: wrap; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark {
+    width: 40px; height: 40px; background: var(--accent); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+  }
+  .brand-text h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+  .brand-text p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .local-pill {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.22);
+    color: var(--green); font-size: 11px; font-weight: 500; padding: 6px 14px;
+    border-radius: 100px; letter-spacing: 0.02em;
+  }
+  .local-pill::before {
+    content: ''; width: 7px; height: 7px; background: var(--green); border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  .layout { display: grid; grid-template-columns: 390px 1fr; gap: 24px; align-items: start; }
+  @media(max-width:760px){ .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .panel + .panel { margin-top: 16px; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .panel { animation: fadeUp 0.35s ease both; }
+  .panel:nth-child(2){ animation-delay:.07s }
+  .panel:nth-child(3){ animation-delay:.14s }
+
+  .panel-head { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .panel-num {
+    width: 24px; height: 24px; border-radius: 6px; background: var(--accent); color: #000;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .panel-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .panel-body { padding: 20px; }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: 8px; padding: 34px 20px;
+    text-align: center; cursor: pointer; transition: all .2s; position: relative; background: var(--surface2);
+  }
+  .drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: rgba(232,197,71,.04); }
+  .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop-icon { font-size: 30px; display: block; margin-bottom: 10px; }
+  .drop-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .drop-text strong { color: var(--accent); font-weight: 500; }
+  .file-ok { display: none; margin-top: 10px; font-size: 12px; color: var(--green); font-weight: 500; }
+
+  /* Destinations */
+  .dest-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .dest-btn {
+    background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--muted);
+    cursor: pointer; transition: all .15s; text-align: left; display: flex; align-items: center; gap: 10px;
+  }
+  .dest-btn .di { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+  .dest-btn .dl { flex: 1; line-height: 1.35; }
+  .dest-btn .dl strong { display: block; color: var(--text); font-weight: 500; margin-bottom: 1px; }
+  .dest-btn .dl span { font-size: 11px; }
+  .dest-btn .ck { color: transparent; font-size: 14px; flex-shrink: 0; transition: color .15s; }
+  .dest-btn:hover { border-color: var(--accent); background: rgba(232,197,71,.04); }
+  .dest-btn.active { border-color: var(--accent); background: rgba(232,197,71,.08); }
+  .dest-btn.active .ck { color: var(--accent); }
+
+  .divider {
+    display: flex; align-items: center; gap: 10px; margin: 14px 0;
+    font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .field-label { font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 7px; display: block; }
+  .field-input {
+    width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 11px 14px; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--text); outline: none; transition: border-color .15s; resize: none;
+  }
+  .field-input::placeholder { color: var(--muted); }
+  .field-input:focus { border-color: var(--accent2); }
+
+  /* Options */
+  .opt-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+  .opt-row:last-of-type { border-bottom: none; }
+  .opt-info .opt-name { font-size: 13px; font-weight: 500; }
+  .opt-info .opt-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .toggle { width: 40px; height: 22px; background: var(--border); border-radius: 11px; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+  .toggle.on { background: var(--accent); }
+  .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  .toggle.on::after { transform: translateX(18px); }
+
+  .slider-wrap { display: flex; align-items: center; gap: 12px; }
+  input[type=range] { flex: 1; height: 4px; -webkit-appearance: none; background: var(--border); border-radius: 2px; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+  .slider-val { font-size: 13px; font-weight: 600; color: var(--accent); min-width: 38px; text-align: right; }
+
+  .color-row { display: flex; gap: 8px; }
+  .color-sw { width: 30px; height: 30px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: border-color .15s, transform .15s; }
+  .color-sw:hover { transform: scale(1.12); }
+  .color-sw.active { border-color: var(--text); }
+
+  .btn-gen {
+    width: 100%; background: var(--accent); color: #000; border: none; border-radius: 8px;
+    padding: 15px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800;
+    cursor: pointer; transition: all .2s; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: .02em;
+  }
+  .btn-gen:hover { background: #f0d050; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,197,71,.25); }
+  .btn-gen:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-dl {
+    width: 100%; background: transparent; color: var(--text); border: 1.5px solid var(--border);
+    border-radius: 8px; padding: 12px; font-family: 'Inter', sans-serif; font-size: 14px;
+    font-weight: 500; cursor: pointer; transition: all .15s; margin-top: 10px;
+  }
+  .btn-dl:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn-dl:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* Preview panel */
+  .preview-panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; position: sticky; top: 24px; animation: fadeUp .35s .1s ease both;
+  }
+  .preview-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .preview-head-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; }
+  .live-badge { font-size: 10px; font-weight: 600; color: var(--accent2); background: rgba(74,158,255,.1); border: 1px solid rgba(74,158,255,.2); padding: 3px 9px; border-radius: 100px; letter-spacing: .05em; }
+  .canvas-wrap { background: #0a0a0a; min-height: 300px; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  #previewCanvas { max-width: 100%; max-height: 380px; display: none; border-radius: 4px; box-shadow: 0 8px 32px rgba(0,0,0,.5); }
+  .ph { text-align: center; color: var(--muted); }
+  .ph .phi { font-size: 48px; display: block; margin-bottom: 12px; opacity: .3; }
+  .ph p { font-size: 13px; line-height: 1.6; }
+
+  .tip { padding: 12px 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; line-height: 1.6; }
+  .tip strong { color: var(--accent2); }
+
+  .info-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 16px 20px; border-top: 1px solid var(--border); }
+  .ic { background: var(--surface2); border-radius: 6px; padding: 11px 13px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .ic .ict { font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+  .ic.g .ict { color: var(--green); }
+  .ic.y .ict { color: var(--accent); }
+  .ic.b .ict { color: var(--accent2); }
+  .ic.r .ict { color: var(--danger); }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; z-index: 999; transform: translateY(80px); opacity: 0; transition: all .3s ease; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+  .toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark">🪪</div>
+      <div class="brand-text">
+        <h1>DNI Seguro</h1>
+        <p>Marca de agua para documentos de identidad</p>
+      </div>
+    </div>
+    <div class="local-pill">100% local · sin servidores</div>
+  </header>
+
+  <div class="layout">
+
+    <div>
+      <!-- Step 1 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-num">1</div>
+          <div class="panel-title">Sube la imagen del DNI</div>
+        </div>
+        <div class="panel-body">
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="fileInput" accept="image/*">
+            <span class="drop-icon">📁</span>
+            <div class="drop-text"><strong>Haz clic o arrastra aquí</strong><br>JPG · PNG · WEBP</div>
+            <div class="file-ok" id="fileOk"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-num">2</div>
+          <div class="panel-title">¿Para qué trámite es?</div>
+        </div>
+        <div class="panel-body">
+          <div class="dest-list">
+            <button class="dest-btn" data-text="SOLO PARA ENTIDAD BANCARIA — NO VÁLIDO PARA OTROS FINES">
+              <span class="di">🏦</span>
+              <span class="dl"><strong>Entidad bancaria</strong><span>Apertura de cuenta, créditos, hipotecas…</span></span>
+              <span class="ck">✓</span>
+            </button>
+            <button class="dest-btn" data-text="SOLO PARA TRÁMITE DE ALQUILER — NO VÁLIDO PARA OTROS FINES">
+              <span class="di">🏠</span>
+              <span class="dl"><strong>Trámite de alquiler</strong><span>Contratos de arrendamiento, inmobiliarias…</span></span>
+              <span class="ck">✓</span>
+            </button>
+            <button class="dest-btn" data-text="SOLO PARA PROCESO DE SELECCIÓN — NO VÁLIDO PARA OTROS FINES">
+              <span class="di">💼</span>
+              <span class="dl"><strong>Proceso de selección</strong><span>Ofertas de trabajo, RRHH, entrevistas…</span></span>
+              <span class="ck">✓</span>
+            </button>
+          </div>
+
+          <div class="divider">o personaliza</div>
+
+          <label class="field-label">Texto personalizado</label>
+          <textarea class="field-input" id="customText" rows="3"
+            placeholder="Ej: Solo para apertura de cuenta en BBVA el 15/03/2025&#10;No válido para otros fines"></textarea>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-num">3</div>
+          <div class="panel-title">Nivel de protección</div>
+        </div>
+        <div class="panel-body">
+
+          <div style="margin-bottom:16px">
+            <label class="field-label">Opacidad de la marca</label>
+            <div class="slider-wrap">
+              <input type="range" id="opacitySlider" min="15" max="65" value="38">
+              <span class="slider-val" id="opacityVal">38%</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px">
+            <label class="field-label">Color</label>
+            <div class="color-row">
+              <div class="color-sw active" data-color="#d9443a" style="background:#d9443a"></div>
+              <div class="color-sw" data-color="#3a7fd9" style="background:#3a7fd9"></div>
+              <div class="color-sw" data-color="#2db870" style="background:#2db870"></div>
+              <div class="color-sw" data-color="#c0c0c0" style="background:#c0c0c0"></div>
+              <div class="color-sw" data-color="#8b3ad9" style="background:#8b3ad9"></div>
+            </div>
+          </div>
+
+          <div class="opt-row">
+            <div class="opt-info">
+              <div class="opt-name">📅 Fecha y hora automáticas</div>
+              <div class="opt-desc">Timestamp exacto en cada marca</div>
+            </div>
+            <div class="toggle on" id="tDate"></div>
+          </div>
+          <div class="opt-row">
+            <div class="opt-info">
+              <div class="opt-name">⚠️ Aviso de uso indebido</div>
+              <div class="opt-desc">Texto legal en el pie de imagen</div>
+            </div>
+            <div class="toggle on" id="tWarning"></div>
+          </div>
+          <div class="opt-row">
+            <div class="opt-info">
+              <div class="opt-name">🔢 Número de serie único</div>
+              <div class="opt-desc">Código de trazabilidad irrepetible</div>
+            </div>
+            <div class="toggle on" id="tSerial"></div>
+          </div>
+
+          <button class="btn-gen" id="generateBtn" disabled>
+            🔒 Generar imagen protegida
+          </button>
+          <button class="btn-dl" id="downloadBtn" disabled>
+            ⬇ Descargar imagen
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div>
+      <div class="preview-panel">
+        <div class="preview-head">
+          <span class="preview-head-title">Vista previa en tiempo real</span>
+          <span class="live-badge">LIVE</span>
+        </div>
+        <div class="canvas-wrap">
+          <div class="ph" id="ph">
+            <span class="phi">🪪</span>
+            <p>Sube una imagen para<br>ver la vista previa</p>
+          </div>
+          <canvas id="previewCanvas"></canvas>
+        </div>
+        <div class="tip">
+          💡 <span><strong>Consejo:</strong> Cuanto más específico sea el texto (empresa, fecha del trámite), más difícil resulta reutilizar el documento para otros fines.</span>
+        </div>
+        <div class="info-cards">
+          <div class="ic g"><div class="ict">🛡 Privacidad total</div>Ninguna imagen sale de tu dispositivo.</div>
+          <div class="ic y"><div class="ict">📄 Alta calidad</div>PNG sin pérdida de calidad.</div>
+          <div class="ic b"><div class="ict">⏱ Trazabilidad</div>Fecha, hora y número único por imagen.</div>
+          <div class="ic r"><div class="ict">⛔ Aviso legal</div>Disuade el uso fraudulento del documento.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let img = null, activePreset = null, color = '#d9443a', generatedCanvas = null;
+const state = { date: true, warning: true, serial: true };
+let currentSerial = newSerial();
+
+function newSerial() { return 'DNI-' + Math.random().toString(36).slice(2,6).toUpperCase() + '-' + Date.now().toString(36).slice(-5).toUpperCase(); }
+function getDateTime() { return new Date().toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function hexRgba(hex, a) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function toast(msg) {
+  const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2800);
+}
+function wText() { return document.getElementById('customText').value.trim() || activePreset; }
+function checkReady() { document.getElementById('generateBtn').disabled = !(img && wText()); }
+
+// File
+document.getElementById('fileInput').addEventListener('change', e => { if(e.target.files[0]) loadFile(e.target.files[0]); });
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) loadFile(f); });
+
+function loadFile(file) {
+  const r = new FileReader();
+  r.onload = e => {
+    const i = new Image();
+    i.onload = () => {
+      img = i;
+      const ok = document.getElementById('fileOk');
+      ok.style.display = 'block'; ok.textContent = '✓ ' + file.name;
+      document.getElementById('ph').style.display = 'none';
+      document.getElementById('previewCanvas').style.display = 'block';
+      renderPreview(); checkReady();
+      toast('✓ Imagen cargada correctamente');
+    };
+    i.src = e.target.result;
+  };
+  r.readAsDataURL(file);
+}
+
+// Presets
+document.querySelectorAll('.dest-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dest-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activePreset = btn.dataset.text;
+    document.getElementById('customText').value = '';
+    checkReady(); if(img) renderPreview();
+  });
+});
+
+document.getElementById('customText').addEventListener('input', e => {
+  if(e.target.value.trim()) { document.querySelectorAll('.dest-btn').forEach(b=>b.classList.remove('active')); activePreset = null; }
+  checkReady(); if(img) renderPreview();
+});
+
+// Toggles
+['tDate','tWarning','tSerial'].forEach((id,i) => {
+  const keys = ['date','warning','serial'];
+  document.getElementById(id).addEventListener('click', function() {
+    state[keys[i]] = !state[keys[i]]; this.classList.toggle('on', state[keys[i]]);
+    if(img) renderPreview();
+  });
+});
+
+// Opacity & color
+document.getElementById('opacitySlider').addEventListener('input', function() {
+  document.getElementById('opacityVal').textContent = this.value + '%';
+  if(img) renderPreview();
+});
+document.querySelectorAll('.color-sw').forEach(sw => {
+  sw.addEventListener('click', () => {
+    document.querySelectorAll('.color-sw').forEach(s=>s.classList.remove('active'));
+    sw.classList.add('active'); color = sw.dataset.color; if(img) renderPreview();
+  });
+});
+
+// --- Watermark drawing ---
+function drawWatermark(ctx, w, h, text, opPct) {
+  const op = opPct / 100;
+  const base = Math.max(13, Math.min(w * 0.042, h * 0.042, 30));
+
+  // Build lines
+  const dateLine = state.date ? getDateTime() : null;
+  const line1 = text;
+  const line2 = dateLine;
+
+  ctx.save();
+  ctx.font = `bold ${base}px 'Syne', Arial, sans-serif`;
+
+  const tw1 = ctx.measureText(line1).width;
+  const tw2 = line2 ? ctx.measureText(line2).width : 0;
+  const tileW = Math.max(tw1, tw2) + base * 4;
+  const tileH = line2 ? base * 5 : base * 3.5;
+
+  ctx.translate(w/2, h/2);
+  ctx.rotate(-Math.PI / 5.5);
+  ctx.translate(-w/2, -h/2);
+
+  const cols = Math.ceil((w + h) / tileW) + 4;
+  const rows = Math.ceil((w + h) / tileH) + 6;
+  ctx.fillStyle = hexRgba(color, op);
+
+  for (let row = -rows; row <= rows*2; row++) {
+    for (let col = -cols; col <= cols*2; col++) {
+      const x = col * tileW + (row%2===0?0:tileW/2) - w*0.6;
+      const y = row * tileH - h*0.6;
+      ctx.fillText(line1, x, y);
+      if (line2) {
+        ctx.font = `500 ${base*0.72}px 'Inter', Arial, sans-serif`;
+        ctx.fillText(line2, x, y + base * 1.4);
+        ctx.font = `bold ${base}px 'Syne', Arial, sans-serif`;
+      }
+    }
+  }
+  ctx.restore();
+
+  // Warning footer
+  if (state.warning) {
+    const ws = Math.max(9, base * 0.52);
+    ctx.save();
+    ctx.font = `500 ${ws}px 'Inter', Arial, sans-serif`;
+    ctx.fillStyle = hexRgba(color, Math.min(op*1.6, 0.9));
+    ctx.textAlign = 'center';
+    ctx.fillText('El uso de este documento para fines distintos al autorizado puede constituir un delito.', w/2, h - ws);
+    ctx.restore();
+  }
+
+  // Serial
+  if (state.serial) {
+    const ss = Math.max(9, base * 0.5);
+    ctx.save();
+    ctx.font = `600 ${ss}px monospace`;
+    ctx.fillStyle = hexRgba(color, Math.min(op*1.4, 0.85));
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(currentSerial, 8, h - 8);
+    ctx.restore();
+  }
+}
+
+function renderPreview() {
+  if (!img) return;
+  const canvas = document.getElementById('previewCanvas');
+  const ctx = canvas.getContext('2d');
+  const MAX = 500;
+  let w = img.width, h = img.height;
+  const r = Math.min(MAX/w, MAX/h, 1);
+  w = Math.round(w*r); h = Math.round(h*r);
+  canvas.width = w; canvas.height = h;
+  ctx.drawImage(img, 0, 0, w, h);
+  const t = wText();
+  if (t) drawWatermark(ctx, w, h, t, parseInt(document.getElementById('opacitySlider').value));
+}
+
+// Generate full res
+document.getElementById('generateBtn').addEventListener('click', () => {
+  if (!img) return;
+  currentSerial = newSerial();
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = img.width; canvas.height = img.height;
+  ctx.drawImage(img, 0, 0);
+  drawWatermark(ctx, img.width, img.height, wText(), parseInt(document.getElementById('opacitySlider').value));
+  generatedCanvas = canvas;
+  renderPreview();
+  document.getElementById('downloadBtn').disabled = false;
+  toast('✅ Imagen protegida generada — lista para descargar');
+});
+
+// Download
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!generatedCanvas) return;
+  const a = document.createElement('a');
+  a.download = 'DNI-protegido-' + Date.now() + '.png';
+  a.href = generatedCanvas.toDataURL('image/png');
+  a.click();
+  toast('⬇ Descargando imagen protegida...');
+});
+</script>
+</body>
+</html>
